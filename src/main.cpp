@@ -1,12 +1,8 @@
 // ===== LIBRARIES =====
 #include <Arduino.h>
-#include <WiFi.h>
-#include <AsyncTCP.h>
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-
-// ===== UART =====
-#define RXp2 16
-#define TXp2 17
 
 // ===== WEB SERVER =====
 // Configuration
@@ -18,12 +14,13 @@ const char *password = "helloworld";
 // Web Parameters
 const char* PARAM_1 = "dayOfExperiment";
 const char* PARAM_2 = "experimentAnimal";
-const char* PARAM_3 = "toneFrequency";
-const char* PARAM_4 = "toneTime";
-const  char* PARAM_5 = "stimulationTime";  
-const char* PARAM_6 = "movementAnalysisTime";
-const char* PARAM_7 = "intervalTime";
-const char* PARAM_8 = "numberOfEvents";
+const char* PARAM_3 = "explorationTime";
+const char* PARAM_4 = "toneFrequency";
+const char* PARAM_5 = "toneTime";
+const  char* PARAM_6 = "stimulationTime";  
+const char* PARAM_7 = "movementAnalysisTime";
+const char* PARAM_8 = "intervalTime";
+const char* PARAM_9 = "numberOfEvents";
 
 // ===== INDEX.HTML  =====
 const char index_html[] PROGMEM = R"rawliteral(
@@ -135,6 +132,14 @@ const char index_html[] PROGMEM = R"rawliteral(
             </div>
             <div class="row">
                 <div class="col-25">
+                <label>Exploration Duration</label>
+                </div>
+                <div class="col-75">
+                    <input type="number" name="explorationTime" placeholder="Duration (s)">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-25">
                 <label>Tone Frequency</label>
                 </div>
                 <div class="col-75">
@@ -200,7 +205,7 @@ void setup() {
 
   // Serial Communication
   Serial.begin(115200);
-  Serial2.begin(115200, SERIAL_8N1, RXp2, TXp2);
+  Serial1.begin(115200);
 
   // Access Point
   WiFi.softAP(ssid, password);
@@ -212,7 +217,7 @@ void setup() {
 
   // Parameters Request
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    String inputMessage1,inputMessage2,inputMessage3, inputMessage4, inputMessage5, inputMessage6, inputMessage7, inputMessage8;
+    String inputMessage1, inputMessage2, inputMessage3, inputMessage4, inputMessage5, inputMessage6, inputMessage7, inputMessage8, inputMessage9;
     // Day of Experiment
     if (request->getParam(PARAM_1)->value() != "") {
       inputMessage1 = request->getParam(PARAM_1)->value();
@@ -225,46 +230,51 @@ void setup() {
     } else {
       inputMessage2 = "0";
     }
-    // Tone Frequency
-    if (request->getParam(PARAM_1)->value() != "") {
+    // Exploration Duration
+    if (request->getParam(PARAM_3)->value() != "") {
       inputMessage3 = request->getParam(PARAM_3)->value();
     } else {
       inputMessage3 = "0";
     }
-    // Tone Time
+    // Tone Frequency
     if (request->getParam(PARAM_4)->value() != "") {
       inputMessage4 = request->getParam(PARAM_4)->value();
     } else {
       inputMessage4 = "0";
     }
-    // Stimulation Time
-    // GET input3 value on <ESP_IP>/get?input3=<inputMessage>
+    // Tone Time
     if (request->getParam(PARAM_5)->value() != "") {
       inputMessage5 = request->getParam(PARAM_5)->value();
     } else {
       inputMessage5 = "0";
     }
-    // Movement Analysis Time
+    // Stimulation Time
     if (request->getParam(PARAM_6)->value() != "") {
       inputMessage6 = request->getParam(PARAM_6)->value();
     } else {
       inputMessage6 = "0";
     }
-    // Interval Time
+    // Movement Analysis Time
     if (request->getParam(PARAM_7)->value() != "") {
       inputMessage7 = request->getParam(PARAM_7)->value();
     } else {
       inputMessage7 = "0";
     }
-    // Number of Events
+    // Interval Time
     if (request->getParam(PARAM_8)->value() != "") {
       inputMessage8 = request->getParam(PARAM_8)->value();
     } else {
       inputMessage8 = "0";
     }
+    // Number of Events
+    if (request->getParam(PARAM_9)->value() != "") {
+      inputMessage9 = request->getParam(PARAM_9)->value();
+    } else {
+      inputMessage9 = "0";
+    }
 
     // Send parameters via UART
-    Serial2.println(inputMessage1 + "," + inputMessage2 + "," + inputMessage3 + "," + inputMessage4 + "," + inputMessage5 + "," + inputMessage6 + "," + inputMessage7 + "," + inputMessage8);
+    Serial1.println(inputMessage1 + "," + inputMessage2 + "," + inputMessage3 + "," + inputMessage4 + "," + inputMessage5 + "," + inputMessage6 + "," + inputMessage7 + "," + inputMessage8 + "," + inputMessage9);
     
     request->send(200, "text/html", "Done"); 
 });
