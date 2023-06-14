@@ -1,17 +1,20 @@
-// ===== LIBRARIES =====
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-
-// ===== WEB SERVER =====
-// Configuration
+/**
+ * @file main.cpp
+ * @author Daniel Fernández (defdzg@gmail.com)
+ * @version 1.0
+ * @date 2023-06-13
+ *
+ */
+/* ------------------------------ Dependencies ------------------------------ */
+#include <Arduino.h> // Arduino framework library
+#include <ESP8266WiFi.h> // ESP8266 WiFi library
+#include <ESPAsyncTCP.h> // ESP8266 Asynchronous TCP library
+#include <ESPAsyncWebServer.h> // ESP8266 Asynchronous Web Server library
+/* --------------------------- Web Server Settings -------------------------- */
 AsyncWebServer server(80);
 const char *ssid = "WebChamber";
 const char *password = "helloworld";
-
-// ===== PARAMETERS =====
-// Web Parameters
+/* -------------------------- Experiment Parameters ------------------------- */
 const char* PARAM_1 = "dayOfExperiment";
 const char* PARAM_2 = "experimentAnimal";
 const char* PARAM_3 = "explorationTime";
@@ -21,8 +24,12 @@ const  char* PARAM_6 = "stimulationTime";
 const char* PARAM_7 = "movementAnalysisTime";
 const char* PARAM_8 = "intervalTime";
 const char* PARAM_9 = "numberOfEvents";
-
-// ===== INDEX.HTML  =====
+/* -------------------------------------------------------------------------- */
+/* The above code is defining an HTML webpage with a form that allows the user to input various
+parameters for an experiment. The form includes input fields for the day of the experiment, rat ID,
+exploration duration, tone frequency, tone duration, shock duration, movement analysis duration,
+wait interval, and event repetition. The form also includes a submit button to start the experiment.
+The code is stored as a character array in program memory using the PROGMEM keyword. */
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -194,28 +201,41 @@ const char index_html[] PROGMEM = R"rawliteral(
 </body>
 </html>
 )rawliteral";
-
-// ===== 404 =====
+/* -------------------------------------------------------------------------- */
+/**
+ * The function sends a 404 error message with "Not found" as the response body.
+ * 
+ * @param request AsyncWebServerRequest object representing the incoming HTTP request. It contains
+ * information about the request such as headers, parameters, and the request method.
+ */
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
-
-// ===== SETUP =====
+/* -------------------------------------------------------------------------- */
+/**
+ * This function sets up a web server that handles requests for a web page and parameters, and sends
+ * the parameters via UART.
+ */
 void setup() {
 
-  // Serial Communication
   Serial.begin(115200);
   Serial1.begin(115200);
 
-  // Access Point
   WiFi.softAP(ssid, password);
 
-  // Web page request
+  /* This code sets up a handler for the root URL ("/") of the web server. When a GET request is made
+  to this URL, the function inside the brackets is executed. This function sends a 200 OK response
+  with the content type "text/html" and the contents of the `index_html` character array as the
+  response body. Essentially, this code is serving the HTML webpage stored in `index_html` when the
+  root URL is requested. */
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html);
   });
 
-  // Parameters Request
+  
+  /* The above code is handling a HTTP GET request to a server. It is retrieving 9 parameters from the
+  request and storing them in variables inputMessage1 to inputMessage9. If a parameter is not
+  present in the request, the corresponding inputMessage variable is set to "0". */
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
     String inputMessage1, inputMessage2, inputMessage3, inputMessage4, inputMessage5, inputMessage6, inputMessage7, inputMessage8, inputMessage9;
     // Day of Experiment
@@ -272,10 +292,11 @@ void setup() {
     } else {
       inputMessage9 = "0";
     }
-
-    // Send parameters via UART
+    
+    // This code sends the parameters via UART to the Arduino.
     Serial1.println(inputMessage1 + "," + inputMessage2 + "," + inputMessage3 + "," + inputMessage4 + "," + inputMessage5 + "," + inputMessage6 + "," + inputMessage7 + "," + inputMessage8 + "," + inputMessage9);
     
+    // This code sends a 200 OK response with the content type "text/html" and the response body
     request->send(200, "text/html", "Done"); 
 });
   server.onNotFound(notFound);
